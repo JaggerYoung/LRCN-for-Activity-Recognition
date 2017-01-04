@@ -5,10 +5,11 @@ import mxnet as mx
 import string
 import math
 
+import numpy as np
 import cPickle as p
 from lstm import lstm_unroll
-from cnn_predict import vgg_predict
-from cnn_predict import get_label
+#from cnn_predict import vgg_predict
+#from cnn_predict import get_label
 
 BATCH_SIZE = 15
 
@@ -52,7 +53,7 @@ class LRCNIter(mx.io.DataIter):
 	self.init_state_arrays = [mx.nd.zeros(x[1]) for x in init_states]
 
 	self.provide_data = [('data',(batch_size, seq_len, 4096))]+init_states
-	self.provide_label = [('label',(batch_size, seq_len, 1))]
+	self.provide_label = [('label',(batch_size, seq_len, ))]
 
     def __iter__(self):
         init_state_names = [x[0] for x in self.init_states]
@@ -103,21 +104,22 @@ if __name__ == '__main__':
     init_h = [('l%d_init_h'%l, (batch_size, num_hidden)) for l in range(num_lstm_layer)]
     init_states = init_c + init_h
 
-    ##data input
-    #(x_train, x_test) = vgg_predict()
-    #(y_train, y_test) = get_label()
     f_1 = file('train_data.data')
     x_train = p.load(f_1)
     f_2 = file('test_data.data')
     x_test = p.load(f_2)
+
     f_3 = file('train_label.data')
     y_train = p.load(f_3)
     f_4 = file('test_label.data')
     y_test = p.load(f_4)
+     
+    #print mx.nd.array(x_train).shape, mx.nd.array(x_test).shape
+    #print mx.nd.array(x_test).shape, mx.nd.array(y_test).shape
 
     data_train = LRCNIter(x_train, y_train, train_data_count, batch_size, seq_len, init_states)
     data_test = LRCNIter(x_test, y_test, test_data_count, batch_size, seq_len, init_states)
-    print data_train.provide_data, data_train.provide_label
+    #print data_train.provide_data, data_train.provide_label
 
     symbol = sym_gen(seq_len)
 
