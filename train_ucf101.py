@@ -42,7 +42,7 @@ class LRCNIter(mx.io.DataIter):
     def __init__(self, dataset, labelset, num, batch_size, seq_len, init_states):
         
 	self.batch_size = batch_size
-	self.count = num/batch_size
+	self.count = num/batch_size/seq_len
 	self.seq_len = seq_len
 	self.dataset = dataset
 	self.labelset = labelset
@@ -59,9 +59,14 @@ class LRCNIter(mx.io.DataIter):
 	    data = []
 	    label = []
 	    for i in range(self.batch_size):
-	        idx = k * self.batch_size + i
-		data.append(self.dataset[idx])
-		label.append(self.labelset[idx])
+	        data_seq = []
+		label_seq = []
+		for j in range(self.seq_len):
+	            idx = k * self.batch_size * self.seq_len + i * self.seq_len + j
+		    data_seq.append(self.dataset[idx])
+		    label_seq.append(self.labelset[idx])
+		data.append(data_seq)
+		label.append(label_seq)
 	
 	    data_all = [mx.nd.array(data)]+self.init_state_arrays
 	    label_all = [mx.nd.array(label)]
@@ -103,6 +108,7 @@ if __name__ == '__main__':
 
     data_train = LRCNIter(x_train, y_train, train_data_count, batch_size, seq_len, init_states)
     data_test = LRCNIter(x_test, y_test, test_data_count, batch_size, seq_len, init_states)
+    print data_train.provide_data, data_train.provide_label
 
     symbol = sym_gen(seq_len)
 
