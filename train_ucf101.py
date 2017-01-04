@@ -136,6 +136,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format=head)
 
     print 'begin fit'
+    batch_end_callbacks = [mx.callback.Speedometer(BATCH_SIZE, 100)]
     debug_metrics = mx.metric.np(Accuracy)
 
-    model.fit(X=data_train, eval_data=data_test, eval_metric=debug_metrics)
+    model.fit(X=data_train, eval_data=data_test, eval_metric=debug_metrics, batch_end_callback=batch_end_callbacks)
