@@ -84,6 +84,9 @@ if __name__ == '__main__':
     momentum = 0.0015
     num_label = 101
     seq_len = 28
+    
+    train_data_count = 9537*28
+    test_data_count = 3783*28
 
     contexts = [mx.context.gpu(0)]
 
