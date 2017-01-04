@@ -5,6 +5,7 @@ import mxnet as mx
 import string
 import math
 
+import cPickle as p
 from lstm import lstm_unroll
 from cnn_predict import vgg_predict
 from cnn_predict import get_label
@@ -103,8 +104,16 @@ if __name__ == '__main__':
     init_states = init_c + init_h
 
     ##data input
-    (x_train, x_test) = vgg_predict()
-    (y_train, y_test) = get_label()
+    #(x_train, x_test) = vgg_predict()
+    #(y_train, y_test) = get_label()
+    f_1 = file('train_data.data')
+    x_train = p.load(f_1)
+    f_2 = file('test_data.data')
+    x_test = p.load(f_2)
+    f_3 = file('train_label.data')
+    y_train = p.load(f_3)
+    f_4 = file('test_label.data')
+    y_test = p.load(f_4)
 
     data_train = LRCNIter(x_train, y_train, train_data_count, batch_size, seq_len, init_states)
     data_test = LRCNIter(x_test, y_test, test_data_count, batch_size, seq_len, init_states)

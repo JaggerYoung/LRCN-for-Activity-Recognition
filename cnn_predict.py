@@ -6,6 +6,7 @@ import cv2
 import random
 import glob
 import numpy as np
+import cPickle as p
 
 NUM_SAMPLES = 28
 BATCH_SIZE = 28
@@ -99,8 +100,8 @@ class VGGIter(mx.io.DataIter):
     def reset(self):
         pass
 
-#if __name__ == '__main__':
-def vgg_predict():    
+if __name__ == '__main__':
+#def vgg_predict():    
     train_num = 9537
     test_num = 3783
 
@@ -128,13 +129,32 @@ def vgg_predict():
     vgg_test_result = feature_exactor.predict(data_val)
     
     #print mx.nd.array(vgg_train_result).shape
-    return (vgg_train_result, vgg_test_result)
+    #return (vgg_train_result, vgg_test_result)
+    train_data_file = 'train_data.data'
+    f_1 = file(train_data_file, 'w')
+    p.dump(vgg_train_result, f_1)
+    f_1.close()
 
-def get_label():
+    test_data_file = 'test_data.data'
+    f_2 = file(test_data_file, 'w')
+    p.dump(vgg_test_result, f_2)
+    f2.close()
+
+#def get_label():
     train_file = '/home/yzg/mxnet/example/LRCN_UCF101/data/train.list'
     test_file = '/home/yzg/mxnet/example/LRCN_UCF101/data/test.list'
     
     (tmp_1, train_label) = readData(train_file, NUM_SAMPLES)
     (tmp_2, test_label) = readData(test_file, NUM_SAMPLES)
 
-    return (train_label, test_label)
+#    return (train_label, test_label)
+    train_label_file = 'train_label.data'
+    f_3 = file(train_label_file, 'w')
+    p.dump(train_label, f_3)
+    f_3.close()
+
+    test_label_file = 'test_label.data'
+    f_2 = file(test_label_file, 'w')
+    p.dump(test_label, f_2)
+    f2.close()
+
