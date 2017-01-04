@@ -7,6 +7,7 @@ import math
 
 from lstm import lstm_unroll
 from cnn_predict import vgg_predict
+from cnn_predict import get_label
 
 BATCH_SIZE = 15
 
