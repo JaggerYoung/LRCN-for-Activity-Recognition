@@ -7,9 +7,10 @@ import random
 import glob
 import numpy as np
 import cPickle as p
+import numpy as np
 
 NUM_SAMPLES = 28
-BATCH_SIZE = 28
+BATCH_SIZE = 15
 
 class SimpleBatch(object):
     def __init__(self, data_names, data, label_names, label):
@@ -32,40 +33,45 @@ class SimpleBatch(object):
 def readData(Filename, num):
     data_1 = []
     data_2 = []
+    num += 1
     f = open(Filename,'r')
     total = f.readlines()
-
+    #print len(total)
     for eachLine in range(len(total)):
         pic = []
-        tmp = total[eachLine].split('\n')
+	tmp = total[eachLine].split('\n')
 	tmp_1, tmp_2 = tmp[0].split(' ',1)
-	tmp_1 = '/home/yzg/UCF-101'+tmp_1
+	tmp_1 = '/data/zhigang.yang/UCF-101'+tmp_1
 	for filename in glob.glob(tmp_1+'/*.jpg'):
 	    pic.append(filename)
 	len_pic = len(pic)
 	l_n = len_pic/num
+	data_tmp = []
 	for i in range(num):
 	    data_1.append(pic[i*l_n])    
+	for i in range(num-1):
 	    data_2.append(int(tmp_2))
     f.close()
     return (data_1, data_2)
 
-def readImg(Filename, data_shape):
+def readImg(FileList, data_shape):
     mat = []
-
-    img = cv2.imread(Filename, cv2.IMREAD_COLOR)
-    r,g,b = cv2.split(img)
-    r = cv2.resize(r, (data_shape[2], data_shape[1]))
-    g = cv2.resize(g, (data_shape[2], data_shape[1]))
-    b = cv2.resize(b, (data_shape[2], data_shape[1]))
-    r = np.multiply(r, 1/255.0)
-    g = np.multiply(g, 1/255.0)
-    b = np.multiply(b, 1/255.0)
-
-    mat.append(r)
-    mat.append(g)
-    mat.append(b)
-
+    tmp = 0
+    ret = len(FileList)/(NUM_SAMPLES+1)
+    for i in range(ret):
+        for j in range(NUM_SAMPLES):
+	    index = i * (NUM_SAMPLES+1) + j    
+            img_1 = cv2.imread(FileList[index], 0)
+            img_11 = cv2.resize(img_1, (data_shape[2], data_shape[1]))
+            img_111 = np.multiply(img_11, 1/255.0)
+            img_2 = cv2.imread(FileList[index+1], 0)
+            img_22 = cv2.resize(img_2, (data_shape[2], data_shape[1]))
+            img_222 = np.multiply(img_22, 1/255.0)
+	    flow = cv2.calcOpticalFlowFarneback(img_111, img_222, 0.5, 3, 15, 3, 5, 1.2, 0)
+	    flow = np.array(flow)
+            flow_1 = flow.transpose((2,1,0))
+	    flow_1 = flow_1.tolist()
+	    mat.append(flow_1)
     return mat
 
 class VGGIter(mx.io.DataIter):
@@ -75,6 +81,7 @@ class VGGIter(mx.io.DataIter):
 	self.data_shape = data_shape
 	self.num = num*NUM_SAMPLES/batch_size
 	(self.data_1, self.data_2) = readData(fname, NUM_SAMPLES)
+	self.img = readImg(self.data_1, self.data_shape)
     
         self.provide_data = [('data', (batch_size,) + data_shape)]
 	self.provide_label = [('label', (batch_size,))]
@@ -85,8 +92,7 @@ class VGGIter(mx.io.DataIter):
 	    label = []
 	    for i in range(self.batch_size):
 	        idx = k * self.batch_size + i
-		img = readImg(self.data_1[idx], self.data_shape)
-		data.append(img)
+		data.append(self.img[idx])
 	        label.append(self.data_2[k])
 	
 	    data_all = [mx.nd.array(data)]
@@ -106,17 +112,18 @@ if __name__ == '__main__':
     test_num = 3783
 
     batch_size = BATCH_SIZE
-    data_shape = (3, 224, 224)
+    data_shape = (2, 224, 224)
     
-    train_file = '/home/yzg/mxnet/example/LRCN_UCF101/data/train.list'
-    test_file = '/home/yzg/mxnet/example/LRCN_UCF101/data/test.list'
+    train_file = '/home/users/zhigang.yang/mxnet/example/LRCN-for-Activity-Recognition/data/train.list'
+    test_file = '/home/users/zhigang.yang/mxnet/example/LRCN-for-Activity-Recognition/data/test.list'
 
+    
     data_train = VGGIter(train_file, train_num, batch_size, data_shape)
     data_val = VGGIter(test_file, test_num, batch_size, data_shape)
 
     print data_train.provide_data, data_train.provide_label
 
-    devs = [mx.context.gpu(0)]
+    devs = [mx.context.gpu(1)]
     model = mx.model.FeedForward.load("./vgg_model/vgg16", epoch=00, ctx=devs, num_batch_size=BATCH_SIZE)
 
     internals = model.symbol.get_internals()
@@ -142,8 +149,6 @@ if __name__ == '__main__':
     f_2.close()
 
 #def get_label():
-    train_file = '/home/yzg/mxnet/example/LRCN_UCF101/data/train.list'
-    test_file = '/home/yzg/mxnet/example/LRCN_UCF101/data/test.list'
     
     (tmp_1, train_label) = readData(train_file, NUM_SAMPLES)
     (tmp_2, test_label) = readData(test_file, NUM_SAMPLES)
